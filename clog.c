@@ -3,9 +3,16 @@
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+
+#define CLOG_SBUF_SIZE ((size_t)CLOG_MAX_LOG_SIZE)
+#define CLOG_FMT_SIZE ((size_t)CLOG_FORMAT_SIZE)
+#ifndef CLOG_DEFAULT_LEVEL
+#define CLOG_DEFAULT_LEVEL CLOG_INFO
+#endif
 
 #define _buff_free_space (CLOG_SBUF_SIZE + sbuff - head)
 #define _clog_fmt_time(buff, head, fmt, timefn) \
@@ -134,7 +141,7 @@ int clog_init_stream(clogger* const logger, FILE* const stream) {
 
 int clog_init_fd(clogger* const logger, int const fd) {
 	logger->fd = fd;
-	logger->level = CLOG_INFO;
+	logger->level = CLOG_DEFAULT_LEVEL;
 	logger->opened = 1;
 	strcpy(logger->log_fmt, CLOG_DEFAULT_FMT);
 	strcpy(logger->time_fmt, CLOG_DEFAULT_TIME_FMT);

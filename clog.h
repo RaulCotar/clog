@@ -1,15 +1,21 @@
 #ifndef __CLOG_H__
 #define __CLOG_H__
 
-#include <stddef.h>
-
+#ifndef CLOG_DEFAULT_FMT
 #define CLOG_DEFAULT_FMT "%t - %f:%n [%l]: %m\n"
+#endif
 
+#ifndef CLOG_DEFAULT_TIME_FMT
 #define CLOG_DEFAULT_TIME_FMT "%Y-%m-%d_%H:%M:%S"
+#endif
 
-#define CLOG_FMT_SIZE ((size_t)32)
+#ifndef CLOG_FORMAT_SIZE
+#define CLOG_FORMAT_SIZE 32
+#endif
 
-#define CLOG_SBUF_SIZE ((size_t)1024)
+#ifndef CLOG_MAX_LOG_SIZE
+#define CLOG_MAX_LOG_SIZE 1024
+#endif
 
 enum clog_level {
     CLOG_DEBUG = 4,	// use for debug printing
@@ -19,14 +25,13 @@ enum clog_level {
 	CLOG_QUIET = 0	// use when no log output is desired
 };
 
-struct clogger {
+typedef struct clogger {
 	enum clog_level level;
 	char opened;
 	int fd;
-	char log_fmt[CLOG_FMT_SIZE];
-	char time_fmt[CLOG_FMT_SIZE];
-};
-typedef struct clogger clogger;
+	char log_fmt[CLOG_FORMAT_SIZE];
+	char time_fmt[CLOG_FORMAT_SIZE];
+} clogger;
 
 #ifndef CLOG_NO_PERR
 #define _clog_perr(fmt, ...) fprintf(stderr, fmt __VA_OPT__(,) __VA_ARGS__)
