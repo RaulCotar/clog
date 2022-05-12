@@ -11,8 +11,9 @@ logging solution.
 
 ## Limitations:
 - there is a (configurable) maximum size for a log
-- logger lifetimes have to be handle manually
+- logger lifetimes have to be handled manually
 - thread safety is not (yet) guarranteed
+- requires c99 or higher and _POSIX_C_SOURCE >= 200809L
 
 ## How to use:
 - define configuration macros

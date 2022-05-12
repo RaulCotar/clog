@@ -1,10 +1,10 @@
-CCFLAGS=-Wall -Wextra -Wpedantic -std=c17 -g
+CCFLAGS=-Wall -Wextra -Wpedantic -std=c99 -g
 LDFLAGS=-L. -lclog
 
 run: test
 	./$<
 
-test: main.c libclog.a
+test: test.c libclog.a
 	cc $< -o $@ $(CCFLAGS) $(LDFLAGS)
 
 libclog.a: clog.c clog.h

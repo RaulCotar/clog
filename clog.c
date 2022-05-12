@@ -81,11 +81,10 @@ void clog_log(clogger* const logger, enum clog_level const lvl,
             }
         }
     }
-    
-	if (write(logger->fd, sbuff, head-sbuff+1) < 0)
-        _clog_perr("Error while flushing buffer to fd! ERRNO %d: %s\n", errno, strerror(errno));
-
 	va_end(ap);
+
+	if (write(logger->fd, sbuff, head-sbuff) < 0)
+        _clog_perr("Error while flushing buffer to fd! ERRNO %d: %s\n", errno, strerror(errno));
 }
 #undef _buff_free_space
 #undef _clog_fmt_time
