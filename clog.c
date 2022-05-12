@@ -1,3 +1,7 @@
+#if _POSIX_C_SOURCE < 200809L
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "clog.h"
 #include <time.h>
 #include <errno.h>
@@ -10,8 +14,15 @@
 
 #define CLOG_SBUF_SIZE ((size_t)CLOG_MAX_LOG_SIZE)
 #define CLOG_FMT_SIZE ((size_t)CLOG_FORMAT_SIZE)
+
 #ifndef CLOG_DEFAULT_LEVEL
 #define CLOG_DEFAULT_LEVEL CLOG_INFO
+#endif
+
+#ifndef CLOG_NO_PERR
+#define _clog_perr(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define _clog_perr(fmt, ...) ((void) fmt)
 #endif
 
 #define _buff_free_space (CLOG_SBUF_SIZE + sbuff - head)

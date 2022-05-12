@@ -33,17 +33,11 @@ typedef struct clogger {
 	char time_fmt[CLOG_FORMAT_SIZE];
 } clogger;
 
-#ifndef CLOG_NO_PERR
-#define _clog_perr(fmt, ...) fprintf(stderr, fmt __VA_OPT__(,) __VA_ARGS__)
-#else
-#define _clog_perr(fmt, ...) (void) fmt
-#endif
-
 void clog_log(clogger* const logger, enum clog_level const lvl, char const * const file, int const line, char const * const fmt, ...);
-#define clog_err(logger, fmt, ...) clog_log(logger, CLOG_ERROR, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define clog_warn(logger, fmt, ...) clog_log(logger, CLOG_WARN, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define clog_info(logger, fmt, ...) clog_log(logger, CLOG_INFO, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define clog_dbg(logger, fmt, ...) clog_log(logger, CLOG_DEBUG, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+#define clog_err(logger, ...) clog_log(logger, CLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_warn(logger, ...) clog_log(logger, CLOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_info(logger, ...) clog_log(logger, CLOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_dbg(logger, ...) clog_log(logger, CLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 
 int clog_init_path(clogger* const logger, char const * const path);
 

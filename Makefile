@@ -1,10 +1,8 @@
-CCFLAGS=-Wall -Wextra -Wpedantic -std=gnu2x -g
+CCFLAGS=-Wall -Wextra -Wpedantic -std=c17 -g
 LDFLAGS=-L. -lclog
 
 run: test
 	./$<
-	cat log.txt
-	#rm log.txt
 
 test: main.c libclog.a
 	cc $< -o $@ $(CCFLAGS) $(LDFLAGS)
