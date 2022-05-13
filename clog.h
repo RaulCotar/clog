@@ -31,12 +31,16 @@ enum clog_level {
 
 typedef struct clogger {
 	enum clog_level level;
-	char opened;
+	char status; // 0 - closed, 1 - opened, other - undefined
 	int fd;
 	char log_fmt[CLOG_FORMAT_SIZE];
 	char time_fmt[CLOG_FORMAT_SIZE];
 } clogger;
 
+/**
+ * The main logging function. Should be used through the provided macros for most of the time.
+ * May set errno.
+ */
 void clog_log(clogger* const logger, enum clog_level const lvl, char const * const file, int const line, char const * const fmt, ...);
 #define log_err(logger, ...) clog_log(logger, CLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define elog(...) log_err(__VA_ARGS__)
@@ -47,16 +51,38 @@ void clog_log(clogger* const logger, enum clog_level const lvl, char const * con
 #define log_dbg(logger, ...) clog_log(logger, CLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 #define dlog(...) log_dbg(__VA_ARGS__)
 
+/**
+ * Init a logger and point it to a file (new or already existing).
+ * Ovewrites the format strings.
+ * May set errno.
+ */
 int clog_init_path(clogger* const logger, char const * const path);
 
+/**
+ * Init a logger and give it an open file descriptor.
+ * The caller must provide a valid file descriptor.
+ */
 int clog_init_fd(clogger* const logger, int const fd);
 
 #ifdef __STDIO_H__
+/**
+ * Init a logger and give it the unix file descriptor behind a C stream.
+ * The caller must provide a valid stream.
+ * May set errno.
+ */
 int clog_init_stream(clogger* const logger, FILE* const file);
 #endif
 
+/**
+ * Set status to 0 and clsoe the associated file descriptor.
+ * May set errno.
+ */
 int clog_close(clogger* const logger);
 
+/**
+ * Only set status to 0 and remove the poiter to the current file descriptor.
+ * Use this function instead of clog_close if you want to keep a fd open.
+ */
 void clog_detach(clogger* const logger);
 
 void clog_set_level(clogger* const logger, enum clog_level const lvl);
@@ -65,6 +91,10 @@ int clog_set_fmt(clogger* const logger, char* const fmt);
 
 int clog_set_time_fmt(clogger* const logger, char* const fmt);
 
+/**
+ * Set the current file descriptor to fd and mark logger as opened.
+ * The caller must provide a valid fire descriptor.
+ */
 int clog_set_fd(clogger* const logger, int const fd);
 
 #if CLOG_GLOBALS > 0

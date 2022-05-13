@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
 
 #define CLOG_SBUF_SIZE ((size_t)CLOG_MAX_LOG_SIZE)
 #define CLOG_FMT_SIZE ((size_t)CLOG_FORMAT_SIZE)
@@ -18,7 +19,6 @@
 #endif
 
 #ifndef CLOG_NO_PERR
-#include <stdio.h>
 #define _clog_perr(...) fprintf(stderr, "!clog! "__VA_ARGS__)
 #else
 #define _clog_perr(fmt, ...) ((void) fmt)
@@ -48,6 +48,10 @@ void clog_log(clogger* const logger, enum clog_level const lvl,
 	}
 	if (lvl > logger->level || logger->log_fmt[0] == 0)
 		return;
+	if (logger->status != 1) {
+		_clog_perr("Cannot use logger with status %d!", logger->status);
+		return;
+	}
 
 	va_list ap;
 	va_start(ap, fmt);
@@ -127,7 +131,7 @@ int clog_set_fd(clogger* const logger, int const fd) {
 		return fd;
 	}
 	logger->fd = fd;
-	logger->opened = 1;
+	logger->status = 1;
 	return 0;
 }
 
@@ -157,15 +161,19 @@ int clog_init_fd(clogger* const logger, int const fd) {
 	}
 	logger->fd = fd;
 	logger->level = CLOG_DEFAULT_LEVEL;
-	logger->opened = 1;
+	logger->status = 1;
 	strcpy(logger->log_fmt, CLOG_DEFAULT_FMT);
 	strcpy(logger->time_fmt, CLOG_DEFAULT_TIME_FMT);
 	return 0;
 }
 
 int clog_close(clogger* const logger) {
+	if (logger->status == 0) {
+		_clog_perr("Logger with fd %d has status 0.\n", logger->fd);
+		return 1;
+	}
 	int r = close(logger->fd);
-	logger->opened = 0;
+	logger->status = 0;
 	if (r == -1) {
 		_clog_perr("Couldn't close file descriptor %i. ERRNO %d: %s\n", logger->fd,
 				errno, strerror(errno));
@@ -176,5 +184,5 @@ int clog_close(clogger* const logger) {
 
 void clog_detach(clogger* const logger) {
 	logger->fd = 0;
-	logger->opened = 0;
+	logger->status = 0;
 }
