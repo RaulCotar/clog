@@ -3,14 +3,12 @@
 #endif
 
 #include "clog.h"
-#include <time.h>
-#include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <stddef.h>
-#include <string.h>
-#include <stdarg.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <string.h>
+#include <time.h>
 
 #define CLOG_SBUF_SIZE ((size_t)CLOG_MAX_LOG_SIZE)
 #define CLOG_FMT_SIZE ((size_t)CLOG_FORMAT_SIZE)
@@ -20,9 +18,18 @@
 #endif
 
 #ifndef CLOG_NO_PERR
-#define _clog_perr(...) fprintf(stderr, __VA_ARGS__)
+#include <stdio.h>
+#define _clog_perr(...) fprintf(stderr, "!clog! "__VA_ARGS__)
 #else
 #define _clog_perr(fmt, ...) ((void) fmt)
+#endif
+
+#ifndef CLOG_OPEN_FILE_MODE
+#define CLOG_OPEN_FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+#endif
+
+#if CLOG_GLOBALS > 0
+clogger _glob_clogs[CLOG_GLOBALS];
 #endif
 
 #define _buff_free_space (CLOG_SBUF_SIZE + sbuff - head)
@@ -69,7 +76,7 @@ void clog_log(clogger* const logger, enum clog_level const lvl,
             		_clog_fmt_time(sbuff, head, logger->time_fmt, localtime_r);
             		break;
             	case 'm':
-            		head += vsnprintf(head, _buff_free_space, fmt, ap);
+					head += vsnprintf(head, _buff_free_space, fmt, ap);
             		break;
             	case '%':
             		*head++ = '%';
@@ -96,46 +103,39 @@ void clog_set_level(clogger* const logger, enum clog_level const lvl) {
 		logger->level = lvl;
 }
 
-int clog_set_fmt(clogger* const logger, char* const fmt, ...) {
-	va_list ap;
-	va_start(ap, fmt);
-	int r = vsnprintf(logger->log_fmt, CLOG_FMT_SIZE, fmt, ap);
-	va_end(ap);
-	if (r < 0) {
-		_clog_perr("Error in vsnprintf in clog_set_fmt. ERRNO %d: %s\n", errno, strerror(errno));
-		return -2;
-	}
-	if ((size_t)r > CLOG_FMT_SIZE) {
-		_clog_perr("Format strong too big for clog_set_fmt, aborting. Max: %lu, actual: %d.\n",
-				CLOG_FMT_SIZE, r);
-		logger->log_fmt[0] = 0;
+int clog_set_fmt(clogger* const logger, char* const fmt) {
+	if (strlen(fmt) > CLOG_FMT_SIZE) {
+		_clog_perr("Log format string too large.");
 		return -1;
 	}
+	strcpy(logger->log_fmt, fmt);
 	return 0;
 }
 
-int clog_set_time_fmt(clogger* const logger, char* const fmt, ...) {
-	va_list ap;
-	va_start(ap, fmt);
-	int r = vsnprintf(logger->time_fmt, CLOG_FMT_SIZE, fmt, ap);
-	va_end(ap);
-	if (r < 0) {
-		_clog_perr("Error in vsnprintf in clog_set_time_fmt. ERRNO %d: %s\n", errno, strerror(errno));
-		return -2;
-	}
-	if ((size_t)r > CLOG_FMT_SIZE) {
-		_clog_perr("Format string too big for clog_set_time_fmt, aborting. Max: %lu, actual: %d.\n", CLOG_FMT_SIZE, r);
-		logger->log_fmt[0] = 0;
+int clog_set_time_fmt(clogger* const logger, char* const fmt) {
+	if (strlen(fmt) > CLOG_FMT_SIZE) {
+		_clog_perr("Time format string too large.");
 		return -1;
 	}
+	strcpy(logger->time_fmt, fmt);
+	return 0;
+}
+
+int clog_set_fd(clogger* const logger, int const fd) {
+	if (fd < 0) {
+		_clog_perr("Trying to set invalid file descriptor %d.\n", fd);
+		return fd;
+	}
+	logger->fd = fd;
+	logger->opened = 1;
 	return 0;
 }
 
 int clog_init_path(clogger* const logger, char const * const path) {
-	int fd = open(path, O_CREAT | O_WRONLY | O_APPEND, 0666);
+	int fd = open(path, O_CREAT | O_WRONLY | O_APPEND | O_CLOEXEC | O_DSYNC, CLOG_OPEN_FILE_MODE);
 	if (fd == -1) {
 		_clog_perr("Cannot open '%s'. ERRNO %d: %s\n", path, errno, strerror(errno));
-		return -1;
+		return fd;
 	}
 	return clog_init_fd(logger, fd);
 }
@@ -143,13 +143,18 @@ int clog_init_path(clogger* const logger, char const * const path) {
 int clog_init_stream(clogger* const logger, FILE* const stream) {
 	int fd = fileno(stream);
 	if (fd == -1) {
-		_clog_perr("Cannot obtain file descriptor from stream. ERRNO %d: %s\n", errno, strerror(errno));
-		return -1;
+		_clog_perr("Cannot obtain file descriptor from stream. ERRNO %d: %s\n",
+				errno, strerror(errno));
+		return fd;
 	}
 	return clog_init_fd(logger, fd);
 }
 
 int clog_init_fd(clogger* const logger, int const fd) {
+	if (fd < 0) {
+		_clog_perr("Trying to initialize logger with invalid file descriptor %d.\n", fd);
+		return fd;
+	}
 	logger->fd = fd;
 	logger->level = CLOG_DEFAULT_LEVEL;
 	logger->opened = 1;
@@ -160,10 +165,16 @@ int clog_init_fd(clogger* const logger, int const fd) {
 
 int clog_close(clogger* const logger) {
 	int r = close(logger->fd);
+	logger->opened = 0;
 	if (r == -1) {
-		_clog_perr("Couldn't close file descriptor %i. ERRNO %d: %s\n", logger->fd, errno, strerror(errno));
+		_clog_perr("Couldn't close file descriptor %i. ERRNO %d: %s\n", logger->fd,
+				errno, strerror(errno));
 		return -1;
 	}
-	logger->opened = 0;
 	return 0;
+}
+
+void clog_detach(clogger* const logger) {
+	logger->fd = 0;
+	logger->opened = 0;
 }

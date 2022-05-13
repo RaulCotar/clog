@@ -1,4 +1,5 @@
-CCFLAGS=-Wall -Wextra -Wpedantic -std=c99 -g
+CLOGCONF=-DCLOG_GLOBALS=2
+CCFLAGS=-Wall -Wextra -Wpedantic -std=c99 -g $(CLOGCONF)
 LDFLAGS=-L. -lclog
 
 run: test
@@ -14,4 +15,4 @@ libclog.a: clog.c clog.h
 .PHONY: clean run
 
 clean:
-	rm -f test *.o *.txt *.a pp
+	rm -f test *.o *.txt *.a pp l*

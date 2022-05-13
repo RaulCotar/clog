@@ -4,27 +4,30 @@ This library is meant for small to medium-sized projects that need a fast, simpl
 logging solution.
 
 ## Features:
-- use any number of loggers
-- log to any file descriptor
-- arbitrary formatting
-- multiple log levels
+- Use any number of loggers
+- Log to any file descriptor
+- Arbitrary log formatting
+- Multiple log levels
 
 ## Limitations:
-- there is a (configurable) maximum size for a log
-- logger lifetimes have to be handled manually
-- thread safety is not (yet) guarranteed
-- requires c99 or higher and _POSIX_C_SOURCE >= 200809L
+- There is a (configurable) maximum size for a log
+- Thread safety is not (yet) guarranteed
+- Requires C99 or higher, with some posix functions. Feature test: _STDC_VERSION__ >= 199901L && _POSIX_C_SOURCE >= 200809L && _POSIX_VERSION >= 200809L
 
-## How to use:
-- define configuration macros
-- include the header
-- link with libclog.a
+## Usage:
+- Compile `libclog` with the desired configuration macros
+- Include `clog.h` wherever you need logging
+- Link with `libclog` (static linking is preferred)
+- See `test.c` for examples on how to use clog.
 
 ## Configuration:
-Configuring clog is as simple as (not)defining any of the following macros when compiling libclog:
-- `CLOG_NO_PERR`: disables internal errors being printed to stderr (default: undefined)
-- `CLOG_DEFAULT_FMT`: the defalut format for the log messages
-- `CLOG_DEFAULT_TIME_FMT`: the default format for timestamps used in logs
-- `CLOG_FORMAT_SIZE`: the maximum length of a format string (default: 32) (not that important)
-- `CLOG_MAX_LOG_SIZE`: the maximum size of a log (try to keep it under 4KiB, default: 1KiB)
-- `CLOG_DEFAULT_LEVEL`: the default log level when initializing a clogger (default: INFO)
+- Important:
+	- `CLOG_NO_PERR` disables internal errors being printed to stderr (default: undefined)
+	- `CLOG_DEFAULT_FMT <string>` the defalut format for the log messages
+	- `CLOG_DEFAULT_TIME_FMT <string>` the default format for timestamps used in logs
+	- `CLOG_MAX_LOG_SIZE <size>` the maximum size of a log (try to keep it small, default: 1KiB)
+	- `CLOG_DEFAULT_LEVEL <enum>` the default log level when initializing a logger (default: CLOG_INFO)
+	- `CLOG_GLOBALS <count>` defines global loggers and convenience macros to use them (default: 0)
+- Extra:
+	- `CLOG_FORMAT_SIZE <size>` the maximum length of a format string (default: 32)
+	- `CLOG_OPEN_FILE_MODE <mode_t>` the access mode of a newly created log file (default: 0420)
