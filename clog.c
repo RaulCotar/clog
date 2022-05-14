@@ -70,7 +70,7 @@ void clog_log(clogger* const logger, enum clog_level const lvl,
             		head += snprintf(head, _buff_free_space, "%d", line);
             		break;
                 case 'l':
-            		head = stpncpy(head, "QUIET\0ERROR\0WARN\0\0INFO\0\0DEBUG" + ((lvl % 5) * 6),
+            		head = stpncpy(head, (char*)"QUIET\0ERROR\0WARN\0\0INFO\0\0DEBUG" + ((lvl % 5) * 6),
             				_buff_free_space);
             		break;
             	case 't':
@@ -132,11 +132,12 @@ int clog_set_fd(clogger* const logger, int const fd) {
 	}
 	logger->fd = fd;
 	logger->status = 1;
+	ilog(logger, "[CLOG] New logger started outputting ot this file descriptor.");
 	return 0;
 }
 
 int clog_init_path(clogger* const logger, char const * const path) {
-	int fd = open(path, O_CREAT | O_WRONLY | O_APPEND | O_CLOEXEC | O_DSYNC, CLOG_OPEN_FILE_MODE);
+	int fd = open(path, O_CREAT | O_WRONLY | O_APPEND | O_CLOEXEC, CLOG_OPEN_FILE_MODE);
 	if (fd == -1) {
 		_clog_perr("Cannot open '%s'. ERRNO %d: %s\n", path, errno, strerror(errno));
 		return fd;
@@ -155,16 +156,10 @@ int clog_init_stream(clogger* const logger, FILE* const stream) {
 }
 
 int clog_init_fd(clogger* const logger, int const fd) {
-	if (fd < 0) {
-		_clog_perr("Trying to initialize logger with invalid file descriptor %d.\n", fd);
-		return fd;
-	}
-	logger->fd = fd;
 	logger->level = CLOG_DEFAULT_LEVEL;
-	logger->status = 1;
 	strcpy(logger->log_fmt, CLOG_DEFAULT_FMT);
 	strcpy(logger->time_fmt, CLOG_DEFAULT_TIME_FMT);
-	return 0;
+	return clog_set_fd(logger, fd);
 }
 
 int clog_close(clogger* const logger) {
