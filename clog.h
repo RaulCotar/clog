@@ -21,13 +21,17 @@
 #define CLOG_GLOBALS 0
 #endif
 
-enum clog_level {
-    CLOG_DEBUG = 4,	// use for debug printing
-    CLOG_INFO  = 3,	// use for info logs, warnings and errors (default)
-    CLOG_WARN  = 2,	// use for warnings and errors only
-    CLOG_ERROR = 1,	// use for errors only
-	CLOG_QUIET = 0	// use when no log output is desired
-};
+#ifndef CLOG_LEVELS
+#define CLOG_LEVELS {\
+    CLOG_DEBUG = 4,	/* use for debug printing */\
+    CLOG_INFO  = 3,	/* use for info logs, warnings and errors (default) */\
+    CLOG_WARN  = 2,	/* use for warnings and errors only */\
+    CLOG_ERROR = 1,	/* use for errors only */\
+	CLOG_QUIET = 0	/* use when no log output is desired */\
+}
+#endif
+
+enum clog_level CLOG_LEVELS;
 
 typedef struct clogger {
 	enum clog_level level;

@@ -7,7 +7,7 @@ logging solution. Due to it's simplicity, clog is also extensible, so custom fea
 - Use any number of loggers
 - Log to any file descriptor
 - Arbitrary log formatting
-- Multiple log levels
+- Customizable log levels
 - High throughput (~240k logs/sec on i5-2430M, SATA3 ssd, Arch Linux)
 
 ## Limitations:
@@ -20,17 +20,19 @@ logging solution. Due to it's simplicity, clog is also extensible, so custom fea
 - Compile `libclog` with the desired configuration macros
 - Include `clog.h` wherever you need logging
 - Link with `libclog` (static linking is preferred for speed)
-- See `test.c` for examples on how to use clog.
+- See `example.c` for examples on how to use clog.
 
 ## Configuration:
+The macros below only need to be defined when compiling libclog, unless otherwise noted.
 - Important:
 	- `CLOG_NO_PERR` disables internal errors being printed to stderr (default: undefined)
 	- `CLOG_DEFAULT_FMT <string>` the defalut format for the log messages
 	- `CLOG_DEFAULT_TIME_FMT <string>` the default format for timestamps used in logs
 	- `CLOG_MAX_LOG_SIZE <size>` the maximum size of a log (default: 1KiB)
-	- `CLOG_DEFAULT_LEVEL <enum>` the default log level when initializing a logger (default: CLOG_INFO)
 	- `CLOG_GLOBALS <count>` defines global loggers and convenience macros to use them (default: 0) (must be defined with the same value in all translation units that use global loggers)
 - Extra:
+	- `CLOG_LEVELS <enum body>` define custom log levels (if defined, you must also define the default level using the macro below) (must be the same in all translation units)
+	- `CLOG_DEFAULT_LEVEL <enum value>` the default log level when initializing a logger (needs to be a value from enum clog_levels, default: CLOG_INFO)
 	- `CLOG_FORMAT_SIZE <size>` the maximum length of a format string (default: 32)
 	- `CLOG_OPEN_FILE_MODE <mode_t>` the access mode of a newly created log file (default: 0420)
 
@@ -38,7 +40,6 @@ logging solution. Due to it's simplicity, clog is also extensible, so custom fea
 Testing and bug fixing are now the main prioriy, but new features are also being considered:
 - Windows support (MSVC and/or MingW)
 - thread safety (logging should be doable from multiple threads in parallel)
-- configurable log levels
 - logger identifiers (loggers will be referenced by their id instead of pointers or numbers)
 - log function that can handle big logs (likely using heap allocations)
 - nicer internal error handling (more detailed, configurable and reliable)
