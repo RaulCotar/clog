@@ -132,7 +132,7 @@ int clog_set_fd(clogger* const logger, int const fd) {
 	}
 	logger->fd = fd;
 	logger->status = 1;
-	ilog(logger, "[CLOG] New logger started outputting ot this file descriptor.");
+	log_info(logger, "[CLOG] New logger started outputting to this file descriptor.");
 	return 0;
 }
 

@@ -46,14 +46,15 @@ typedef struct clogger {
  * May set errno.
  */
 void clog_log(clogger* const logger, enum clog_level const lvl, char const * const file, int const line, char const * const fmt, ...);
-#define log_err(logger, ...) clog_log(logger, CLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define elog(...) log_err(__VA_ARGS__)
-#define log_warn(logger, ...) clog_log(logger, CLOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define wlog(...) log_warn(__VA_ARGS__)
-#define log_info(logger, ...) clog_log(logger, CLOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define ilog(...) log_info(__VA_ARGS__)
-#define log_dbg(logger, ...) clog_log(logger, CLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define dlog(...) log_dbg(__VA_ARGS__)
+#define clog_err(logger, ...) clog_log(logger, CLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_warn(logger, ...) clog_log(logger, CLOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_info(logger, ...) clog_log(logger, CLOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define clog_dbg(logger, ...) clog_log(logger, CLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+/* The macros below may get redefined if CLOG_GLOBALS > 0 */
+#define log_err(...) clog_err(__VA_ARGS__)
+#define log_warn(...) clog_warn(__VA_ARGS__)
+#define log_info(...) clog_info(__VA_ARGS__)
+#define log_dbg(...) clog_dbg(__VA_ARGS__)
 
 /**
  * Init a logger and point it to a file (new or already existing).
@@ -105,13 +106,20 @@ int clog_set_fd(clogger* const logger, int const fd);
 extern clogger _glob_clogs[CLOG_GLOBALS];
 
 #define glog_err(nr, ...)  log_err(_glob_clogs + (nr), __VA_ARGS__)
-#define eglog(...) glog_err(__VA_ARGS__)
 #define glog_warn(nr, ...) log_warn(_glob_clogs + (nr), __VA_ARGS__)
-#define wglog(...) glog_warn(__VA_ARGS__)
 #define glog_info(nr, ...) log_info(_glob_clogs + (nr), __VA_ARGS__)
-#define iglog(...) glog_info(__VA_ARGS__)
 #define glog_dbg(nr, ...)  log_dbg(_glob_clogs + (nr), __VA_ARGS__)
-#define dglog(...) glog_dbg(__VA_ARGS__)
+
+#ifdef CLOG_GENERICS
+#define log_err(x, ...) \
+	_Generic((x), int: glog_err, size_t: glog_err, clogger*: clog_err) (x, __VA_ARGS__)
+#define log_warn(x, ...) \
+	_Generic((x), int: glog_warn, size_t: glog_warn, clogger*: clog_warn) (x, __VA_ARGS__)
+#define log_info(x, ...) \
+	_Generic((x), int: glog_info, size_t: glog_info, clogger*: clog_info) (x, __VA_ARGS__)
+#define log_dbg(x, ...) \
+	_Generic((x), int: glog_dbg, size_t: glog_dbg, clogger*: clog_dbg) (x, __VA_ARGS__)
+#endif
 
 #define gclog_init_path(nr, path) clog_init_path(_glob_clogs + (nr), path)
 
