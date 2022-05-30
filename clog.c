@@ -132,7 +132,9 @@ int clog_set_fd(clogger* const logger, int const fd) {
 	}
 	logger->fd = fd;
 	logger->status = 1;
+	#ifndef CLOG_NO_ATTACH_MSG
 	log_info(logger, "[CLOG] New logger started outputting to this file descriptor.");
+	#endif
 	return 0;
 }
 
@@ -164,7 +166,7 @@ int clog_init_fd(clogger* const logger, int const fd) {
 
 int clog_close(clogger* const logger) {
 	if (logger->status == 0) {
-		_clog_perr("Logger with fd %d has status 0.\n", logger->fd);
+		_clog_perr("Trying to close logger with fd %d has status 0.\n", logger->fd);
 		return 1;
 	}
 	int r = close(logger->fd);

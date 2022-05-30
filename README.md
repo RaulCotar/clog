@@ -9,6 +9,7 @@ logging solution. Due to it's simplicity, clog is also extensible, so custom fea
 - Arbitrary log formatting
 - Customizable log levels
 - High throughput (~240k logs/sec on i5-2430M, SATA3 ssd, Arch Linux)
+- Thread safe with pthreads
 
 ## Limitations:
 - There is a (configurable) maximum size for a log
@@ -31,8 +32,9 @@ The macros below only need to be defined when compiling libclog, unless otherwis
 	- `CLOG_MAX_LOG_SIZE <size>` the maximum size of a log (default: 1KiB)
 	- `CLOG_GLOBALS <count>` defines global loggers and convenience macros to use them (default: 0) (must be defined with the same value in all translation units that use global loggers)
 - Extra:
-	- `CLOG_LEVELS <enum body>` define custom log levels (if defined, you must also define the default level using the macro below) (must be the same in all translation units)
 	- `CLOG_DEFAULT_LEVEL <enum value>` the default log level when initializing a logger (needs to be a value from `enum clog_level`, default: `CLOG_INFO`)
+	- `CLOG_NO_ATTACH_MSG` stop cloggers from writing the small log whenever a new fd is set (default: undefined)
+	- `CLOG_LEVELS <enum body>` define custom log levels (if defined, you must also define the default level using the macro below) (must be the same in all translation units)
 	- `CLOG_FORMAT_SIZE <size>` the maximum length of a format string (default: 32)
 	- `CLOG_OPEN_FILE_MODE <mode_t>` the access mode of a newly created log file (default: 0420)
 	- `CLOG_GENERICS` defines convenient macros using _Generic that automatically choose between `clog_*` and `glog_*` functions (default: undefined, requires `__STDC_VERSION__ >= 201112L`)
@@ -40,7 +42,6 @@ The macros below only need to be defined when compiling libclog, unless otherwis
 ## Future plans:
 Testing and bug fixing are now the main prioriy, but new features are also being considered:
 - Windows support (MSVC and/or MinGW-w64)
-- thread safety (logging should be doable from multiple threads in parallel)
 - log function that can handle big logs (likely using heap allocations)
 - logger identifiers (loggers will be referenced by their id instead of pointers or numbers)
 - nicer internal error handling (more detailed, configurable and reliable)

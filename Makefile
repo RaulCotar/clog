@@ -30,6 +30,15 @@ libclog_clang.a: clog.c clog.h
 	clang -c $< -o clog.o $(CCFLAGS)
 	ar -rcs $@ clog.o
 
+test: test.c libclog_gcc.a libclog_clang.a
+	printf "GCC --------------------------\n"
+	clang $< -o $@ $(CCFLAGS) $(LDFLAGS)_gcc
+	/usr/bin/time ./$@
+	printf "\nCLANG ------------------------\n"
+	clang $< -o $@ $(CCFLAGS) $(LDFLAGS)_clang
+	/usr/bin/time ./$@
+	printf "\n"
+
 speed: speed.c libclog_gcc.a libclog_clang.a
 	printf "GCC --------------------------\n"
 	clang $< -o $@ $(CCFLAGS) $(LDFLAGS)_gcc
@@ -40,7 +49,7 @@ speed: speed.c libclog_gcc.a libclog_clang.a
 	printf "\n"
 	make clean
 
-.PHONY: clean run default speed
+.PHONY: clean run default speed test
 
 clean:
-	rm -f ex_* speed *.o *.a *.txt *.log
+	rm -f ex_* speed test *.o *.a *.txt *.log
